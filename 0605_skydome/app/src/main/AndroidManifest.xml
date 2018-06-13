@@ -56,6 +56,15 @@
             android:name=".Pop_information"
             android:theme="@style/AppTheme.Pop" />
         <activity android:name=".Add_Event"></activity>
+
+
+
+
     </application>
+
+    <uses-permission android:name="android.permission.CALL_PHONE"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
 </manifest>

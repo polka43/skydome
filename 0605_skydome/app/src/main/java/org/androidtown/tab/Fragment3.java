@@ -1,92 +1,141 @@
 package org.androidtown.tab;
 
-import android.content.Context;
-import android.content.SharedPreferences;
-import android.database.DataSetObserver;
+import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
-import android.support.v4.app.Fragment;
+import android.support.v4.app.ListFragment;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
-import android.widget.AdapterView;
-import android.widget.Button;
 import android.widget.ListView;
-import android.widget.Spinner;
-import android.widget.TextView;
 import android.widget.Toast;
 
+import com.androidquery.AQuery;
+import com.androidquery.callback.AjaxCallback;
+import com.androidquery.callback.AjaxStatus;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
+
 import java.util.ArrayList;
-import java.util.List;
-
-import static android.content.Context.MODE_PRIVATE;
+import java.util.HashMap;
 
 
-public class Fragment3 extends Fragment {
-    Spinner sp;
-    ListViewAdapter adapter;
-    TextView textView;
+public class Fragment3 extends ListFragment {
+    private Around_ListViewItem data;
 
-    NoticeListAdapter adapter1;
-    ListView noticeListView1;
-    ArrayList<Notice> noticeItem1;
-    Notice notice1;
-    Notice notice3;
+    ListView listView = null;
+    Around_ListViewAdapter adapter;
 
-    NoticeListAdapter adapter2;
-    ListView noticeListView2;
-    ArrayList<Notice> noticeItem2;
-    Notice notice2;
+
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.fragment3, container, false);
-        noticeListView1 = (ListView) rootView.findViewById(R.id.noticeListView1);
-        noticeListView2 = (ListView) rootView.findViewById(R.id.showListView);
-        Log.e("온크리에이트","온크리에이트 뷰");
+        ViewGroup rootView = (ViewGroup) inflater.inflate(R.layout.around_listview, container, false);
+        listView = (ListView) rootView.findViewById(R.id.listview);
+        adapter = new Around_ListViewAdapter(rootView);
+        adapter.setTelClickListener(new View.OnClickListener() {
 
-        SharedPreferences preferences = getContext().getSharedPreferences("id",MODE_PRIVATE);
-        String id = preferences.getString("id", "");
-        Toast.makeText(getContext() , "id"+id,Toast.LENGTH_LONG);
 
-        Log.e("aaaaa", id+"");
-        textView = (TextView) rootView.findViewById(R.id.idConfirm);
-       // textView.setText(id);
-        noticeItem1 = new ArrayList<Notice>();
-        notice1 = new Notice("1."," 김밥싸들고 행주산성 소풍가기~","남한산성 아니 행주산성!!");
-        notice3 = new Notice("2."," 파주 헤이리마을, 아울렛, 쁘띠프랑스 소풍가기~","파주 어디까지 가봤니?");
-        noticeItem1.add(notice1);
-        noticeItem1.add(notice3);
-        adapter1 = new NoticeListAdapter(getContext(), noticeItem1);
-        //adapter = new NoticeListAdapter();
-
-        noticeItem2 = new ArrayList<Notice>();
-        notice2 = new Notice("1."," 현지 한국인들과 여행온 외국인들이 함께 여행하며 친목을 쌓으며 친구되기 프로젝트!!","한국은 처음이지?");
-        noticeItem2.add(notice2);
-        adapter2 = new NoticeListAdapter(getContext(), noticeItem2);
-        noticeListView2.setAdapter(adapter2);
-
-        sp  = (Spinner) rootView.findViewById(R.id.rankSpinner);
-        sp.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
             @Override
-            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
-                if (sp.getSelectedItem().equals("경기"))
-                {
-                    noticeListView1.setAdapter(adapter1);
-                }
+            public void onClick(View v) {
+                Around_ListViewItem item = adapter.getItem((Integer) v.getTag());
 
+                String tel = "tel : " + item.getTel();
+                startActivity(new Intent("android.intent.action.DIAL", Uri.parse(tel)));
             }
-
-            @Override
-            public void onNothingSelected(AdapterView<?> parent) {
-
-                }
         });
 
+        adapter.setMapClickListener(new View.OnClickListener() {
 
-        return rootView;
+            @Override
+            public void onClick(View v) {
+                Around_ListViewItem item = adapter.getItem((Integer) v.getTag());
+                Uri gmmIntentUri = Uri.parse("geo:" + item.getMapy() + "," + item.getMapx());
+                Intent mapIntent = new Intent(Intent.ACTION_VIEW, gmmIntentUri);
+                mapIntent.setPackage("com.google.android.apps.maps");
+                startActivity(mapIntent);
+            }
+
+
+        });
+
+//        listView.setAdapter(adapter);
+        setListAdapter(adapter);
+        loadData();
+
+        return super.onCreateView(inflater, container, savedInstanceState);
+    }
+
+    private void loadData() {
+        AQuery aq = new AQuery(getContext());
+
+        HashMap<String, String> params = new HashMap<>();
+        params.put("ServiceKey","EJt3X5VcUzwhcTsR7BqCp0dlXcdBHWiEPsWaeJ6lUN6fcIhfxb8X4kwFIjKmP6APcVJBPILeStpY%2B7hTUhTK8w%3D%3D");
+        params.put("numOfRows","20");
+        params.put("pageNo","1");
+        params.put("MobileOS","ETC");
+        params.put("MobileApp","AppTest");
+        params.put("arrange","A");
+        params.put("listYN","Y");
+        params.put("areaCode","1");
+        params.put("eventStartDate","20170901");
+        params.put("_type","json");
+
+        String url = "http://api.visitkorea.or.kr/openapi/service/rest/KorService/searchFestival";
+        url = addParams(url, params);
+
+        aq.ajax(url, JSONObject.class, new AjaxCallback<JSONObject>() {
+            public void callback(String url, JSONObject resutl, AjaxStatus status) {
+                if (resutl != null) {
+                    Log.i("test", resutl.toString());
+
+                    try {
+                        JSONArray jar = resutl.optJSONObject("response").optJSONObject("body").optJSONObject("items").optJSONArray("item");
+
+                        ArrayList<Around_ListViewItem> arItem = new ArrayList<>();
+                        for (int i = 0; i < jar.length(); i++) {
+                            JSONObject jobj = jar.optJSONObject(i);
+
+                            Around_ListViewItem item = new Around_ListViewItem();
+                            item.setTitle(jobj.optString("title"));
+                            item.setAddress(jobj.optString("addr1"));
+                            item.setFirstimage(jobj.optString("firstimage"));
+                            item.setMapx(jobj.optDouble("mapx"));
+                            item.setMapy(jobj.optDouble("mapy"));
+                            item.setTel(jobj.optString("tel"));
+
+                            arItem.add(item);
+
+                        }
+
+                        if (arItem.size() > 0) {
+                            adapter.getArItem().addAll(arItem);
+                            adapter.notifyDataSetChanged();
+                        }
+
+                    } catch (Exception e) {
+                        Toast.makeText(getContext(), "제이슨오류", Toast.LENGTH_SHORT).show();
+                    }
+                } else {
+                    Toast.makeText(getContext(), "잘못된 요청", Toast.LENGTH_SHORT).show();
+
+                }
+            }
+        }.timeout(20000));
     }
 
 
+    private String addParams(String url, HashMap<String, String> mapParam){
+        StringBuilder stringBuilder = new StringBuilder(url+"?");
+
+        if(mapParam != null){
+            for(String key : mapParam.keySet()){
+                stringBuilder.append(key+"=");
+                stringBuilder.append(mapParam.get(key)+"&");
+            }
+        }
+        return  stringBuilder.toString();
+    }
 }

@@ -1,13 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="city">
-        <item >서울</item>
-        <item >경기</item>
-        <item >부천</item>
-        <item >수원</item>
-        <item >파주</item>
-        <item >부산</item>
-        <item >대전</item>
+        <item >1월</item>
+        <item >2월</item>
+        <item >3월</item>
+        <item >4월</item>
+        <item >5월</item>
+        <item >6월</item>
+        <item >7월</item>
+        <item >8월</item>
+        <item >9월</item>
+        <item >10월</item>
+        <item >11월</item>
+        <item >12월</item>
     </string-array>
 </resources>
 
